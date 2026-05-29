@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Editor com Desfazer</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="editor-panel" aria-labelledby="app-title">
+        <div class="header-group">
+          <p class="eyebrow">Estrutura de Dados: Pilhas</p>
+          <h1 id="app-title">Editor com Desfazer</h1>
+          <p class="summary">
+            Protótipo Web que usa duas pilhas manuais para controlar as ações
+            de desfazer e refazer.
+          </p>
+        </div>
+
+        <form class="input-row" id="insert-form">
+          <label for="text-input">Texto para inserir</label>
+          <div class="input-actions">
+            <input
+              id="text-input"
+              name="text-input"
+              type="text"
+              autocomplete="off"
+              placeholder="Digite um trecho e clique em inserir"
+            />
+            <button type="submit" class="button primary">Inserir</button>
+          </div>
+        </form>
+
+        <div class="toolbar" aria-label="Controles do editor">
+          <button type="button" class="button" id="undo-button">Desfazer</button>
+          <button type="button" class="button" id="redo-button">Refazer</button>
+          <button type="button" class="button danger" id="clear-button">
+            Limpar
+          </button>
+        </div>
+
+        <label for="editor-content" class="editor-label">Conteúdo atual</label>
+        <textarea
+          id="editor-content"
+          class="editor"
+          readonly
+          placeholder="O texto inserido aparecerá aqui."
+        ></textarea>
+
+        <div class="status-bar">
+          <span id="character-count">0 caracteres</span>
+          <span id="save-status">Nenhuma alteração salva</span>
+        </div>
+      </section>
+
+      <aside class="history-panel" aria-label="Histórico das pilhas">
+        <section class="stack-card">
+          <div>
+            <p class="stack-label">Pilha de desfazer</p>
+            <h2>Undo Stack</h2>
+          </div>
+          <ol id="undo-stack-list" class="stack-list"></ol>
+        </section>
+
+        <section class="stack-card">
+          <div>
+            <p class="stack-label">Pilha de refazer</p>
+            <h2>Redo Stack</h2>
+          </div>
+          <ol id="redo-stack-list" class="stack-list"></ol>
+        </section>
+      </aside>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
