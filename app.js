@@ -1,64 +1,5 @@
 const STORAGE_KEY = "undo-editor:v2";
 
-class StackNode {
-  constructor(value, next = null) {
-    this.value = value;
-    this.next = next;
-  }
-}
-
-class Stack {
-  constructor(initialValues = []) {
-    this.top = null;
-    this.size = 0;
-
-    for (let index = initialValues.length - 1; index >= 0; index -= 1) {
-      this.push(initialValues[index]);
-    }
-  }
-
-  push(value) {
-    this.top = new StackNode(value, this.top);
-    this.size += 1;
-  }
-
-  pop() {
-    if (this.isEmpty()) {
-      return null;
-    }
-
-    const currentTop = this.top;
-    this.top = currentTop.next;
-    this.size -= 1;
-    return currentTop.value;
-  }
-
-  peek() {
-    return this.top ? this.top.value : null;
-  }
-
-  isEmpty() {
-    return this.size === 0;
-  }
-
-  clear() {
-    this.top = null;
-    this.size = 0;
-  }
-
-  toArray() {
-    const values = [];
-    let current = this.top;
-
-    while (current) {
-      values.push(current.value);
-      current = current.next;
-    }
-
-    return values;
-  }
-}
-
 const elements = {
   form: document.querySelector("#insert-form"),
   input: document.querySelector("#text-input"),
@@ -71,117 +12,10 @@ const elements = {
   redoStackList: document.querySelector("#redo-stack-list"),
 };
 
-const itemStack = new Stack();
-const redoStack = new Stack();
 let updatedAt = null;
 let enteringMainItems = 0;
 let enteringRedoItems = 0;
 let isMovingItem = false;
-let audioContext = null;
-
-function restoreStack(stack, values) {
-  stack.clear();
-
-  values
-    .slice()
-    .reverse()
-    .forEach((item) => stack.push(item));
-}
-
-function splitIntoItems(value) {
-  return String(value ?? "").trim().split(/\s+/).filter(Boolean);
-}
-
-function wait(duration) {
-  return new Promise((resolve) => {
-    window.setTimeout(resolve, duration);
-  });
-}
-
-function prefersReducedMotion() {
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
-
-async function animateElementExit(element) {
-  if (!element || prefersReducedMotion()) {
-    return;
-  }
-
-  element.classList.add("is-leaving");
-  await wait(180);
-}
-
-function getAudioContext() {
-  const BrowserAudioContext = window.AudioContext || window.webkitAudioContext;
-
-  if (!BrowserAudioContext) {
-    return null;
-  }
-
-  if (!audioContext) {
-    audioContext = new BrowserAudioContext();
-  }
-
-  return audioContext;
-}
-
-function playInsertSound() {
-  const context = getAudioContext();
-
-  if (!context) {
-    return;
-  }
-
-  if (context.state === "suspended") {
-    context.resume();
-  }
-
-  const now = context.currentTime;
-  const oscillator = context.createOscillator();
-  const gain = context.createGain();
-
-  oscillator.type = "triangle";
-  oscillator.frequency.setValueAtTime(360, now);
-  oscillator.frequency.exponentialRampToValueAtTime(620, now + 0.08);
-
-  gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.exponentialRampToValueAtTime(0.08, now + 0.015);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
-
-  oscillator.connect(gain);
-  gain.connect(context.destination);
-  oscillator.start(now);
-  oscillator.stop(now + 0.16);
-}
-
-function playUndoSound() {
-  const context = getAudioContext();
-
-  if (!context) {
-    return;
-  }
-
-  if (context.state === "suspended") {
-    context.resume();
-  }
-
-  const now = context.currentTime;
-  const oscillator = context.createOscillator();
-  const gain = context.createGain();
-
-  oscillator.type = "sine";
-  oscillator.frequency.setValueAtTime(520, now);
-  oscillator.frequency.exponentialRampToValueAtTime(180, now + 0.16);
-
-  gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.exponentialRampToValueAtTime(0.07, now + 0.015);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
-
-  oscillator.connect(gain);
-  gain.connect(context.destination);
-  oscillator.start(now);
-  oscillator.stop(now + 0.2);
-}
 
 function loadState() {
   const savedData = localStorage.getItem(STORAGE_KEY);
@@ -193,20 +27,7 @@ function loadState() {
   try {
     const parsedData = JSON.parse(savedData);
     updatedAt = parsedData.updatedAt || null;
-
-    const savedItems = Array.isArray(parsedData.items)
-      ? parsedData.items
-      : typeof parsedData.content === "string"
-      ? splitIntoItems(parsedData.content).reverse()
-      : [];
-    const savedRedoItems = Array.isArray(parsedData.redoItems)
-      ? parsedData.redoItems
-      : Array.isArray(parsedData.redoStack)
-      ? parsedData.redoStack.flatMap((item) => splitIntoItems(item)).reverse()
-      : [];
-
-    restoreStack(itemStack, savedItems);
-    restoreStack(redoStack, savedRedoItems);
+    StackLogic.loadSnapshot(parsedData);
   } catch {
     localStorage.removeItem(STORAGE_KEY);
   }
@@ -214,14 +35,10 @@ function loadState() {
 
 function saveState() {
   updatedAt = new Date().toISOString();
-
-  const state = {
-    items: itemStack.toArray(),
-    redoItems: redoStack.toArray(),
-    updatedAt,
-  };
-
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify(StackLogic.createSnapshot(updatedAt))
+  );
 }
 
 function formatDate(dateValue) {
@@ -245,12 +62,13 @@ function getPreview(value) {
 
 function renderMainStack() {
   elements.stackDisplay.innerHTML = "";
-  const values = itemStack.toArray();
+  const values = StackLogic.getMainItems();
 
   if (values.length === 0) {
     const item = document.createElement("li");
     item.className = "stack-empty";
-    item.textContent = "A pilha está vazia. Digite uma palavra e clique em Empilhar.";
+    item.textContent =
+      "A pilha está vazia. Digite uma palavra e clique em Empilhar.";
     elements.stackDisplay.appendChild(item);
     return;
   }
@@ -265,6 +83,7 @@ function renderMainStack() {
       item.classList.add("is-entering");
       item.style.animationDelay = `${index * 35}ms`;
     }
+
     badge.className = "stack-layer-badge";
     text.className = "stack-layer-text";
     badge.textContent = index === 0 ? "Topo" : `Item ${index + 1}`;
@@ -277,15 +96,15 @@ function renderMainStack() {
   enteringMainItems = 0;
 }
 
-function renderRedoStack(listElement, stack) {
-  listElement.innerHTML = "";
-  const values = stack.toArray();
+function renderRedoStack() {
+  elements.redoStackList.innerHTML = "";
+  const values = StackLogic.getRedoItems();
 
   if (values.length === 0) {
     const item = document.createElement("li");
     item.className = "empty-state";
     item.textContent = "Nenhum item para refazer";
-    listElement.appendChild(item);
+    elements.redoStackList.appendChild(item);
     return;
   }
 
@@ -305,7 +124,7 @@ function renderRedoStack(listElement, stack) {
     }
 
     item.append(label, preview);
-    listElement.appendChild(item);
+    elements.redoStackList.appendChild(item);
   });
 
   enteringRedoItems = 0;
@@ -313,78 +132,80 @@ function renderRedoStack(listElement, stack) {
 
 function render() {
   renderMainStack();
-  elements.characterCount.textContent = `${itemStack.size} ${
-    itemStack.size === 1 ? "item empilhado" : "itens empilhados"
+  elements.characterCount.textContent = `${StackLogic.getMainSize()} ${
+    StackLogic.getMainSize() === 1 ? "item empilhado" : "itens empilhados"
   }`;
   elements.saveStatus.textContent = formatDate(updatedAt);
-  elements.undoButton.disabled = itemStack.isEmpty();
-  elements.redoButton.disabled = redoStack.isEmpty();
-  elements.clearButton.disabled = itemStack.isEmpty() && redoStack.isEmpty();
+  elements.undoButton.disabled = !StackLogic.canUndo();
+  elements.redoButton.disabled = !StackLogic.canRedo();
+  elements.clearButton.disabled = !StackLogic.hasItems();
 
-  renderRedoStack(elements.redoStackList, redoStack);
-}
-
-function pushItems(items) {
-  if (items.length === 0) {
-    return;
-  }
-
-  items.forEach((item) => itemStack.push(item));
-  redoStack.clear();
-  enteringMainItems = items.length;
-  saveState();
-  render();
-  playInsertSound();
+  renderRedoStack();
 }
 
 function insertText(event) {
   event.preventDefault();
 
-  const itemsToInsert = splitIntoItems(elements.input.value);
+  const pushedItems = StackLogic.pushText(elements.input.value);
 
-  if (itemsToInsert.length === 0) {
+  if (pushedItems === 0) {
     elements.input.focus();
     return;
   }
 
-  pushItems(itemsToInsert);
+  enteringMainItems = pushedItems;
+  saveState();
+  render();
+  StackEffects.playInsertSound();
   elements.input.value = "";
   elements.input.focus();
 }
 
 async function undo() {
-  if (itemStack.isEmpty() || isMovingItem) {
+  if (!StackLogic.canUndo() || isMovingItem) {
     return;
   }
 
   isMovingItem = true;
-  playUndoSound();
-  await animateElementExit(elements.stackDisplay.querySelector(".is-top"));
-  redoStack.push(itemStack.pop());
-  enteringRedoItems = 1;
-  saveState();
-  render();
+  StackEffects.playUndoSound();
+  await StackEffects.animateElementExit(
+    elements.stackDisplay.querySelector(".is-top")
+  );
+
+  if (StackLogic.undo() !== null) {
+    enteringRedoItems = 1;
+    saveState();
+    render();
+  }
+
   isMovingItem = false;
 }
 
 async function redo() {
-  if (redoStack.isEmpty() || isMovingItem) {
+  if (!StackLogic.canRedo() || isMovingItem) {
     return;
   }
 
   isMovingItem = true;
-  await animateElementExit(elements.redoStackList.querySelector("li"));
-  itemStack.push(redoStack.pop());
-  enteringMainItems = 1;
-  saveState();
-  render();
-  playInsertSound();
+  await StackEffects.animateElementExit(elements.redoStackList.querySelector("li"));
+
+  if (StackLogic.redo() !== null) {
+    enteringMainItems = 1;
+    saveState();
+    render();
+    StackEffects.playInsertSound();
+  }
+
   isMovingItem = false;
 }
 
 function clearEditor() {
-  itemStack.clear();
-  redoStack.clear();
+  if (!StackLogic.hasItems()) {
+    return;
+  }
+
+  StackEffects.playClearSound();
+  StackLogic.clearAll();
   updatedAt = null;
   localStorage.removeItem(STORAGE_KEY);
   render();

@@ -17,6 +17,16 @@ um item empilhado no topo da pilha principal.
 - JavaScript puro
 - LocalStorage para persistência no navegador
 
+## Organização do código
+
+- `stack.js`: implementação manual da estrutura de dados pilha, com comentários didáticos.
+- `stack-logic.js`: regras de empilhar, desfazer, refazer e limpar usando as pilhas.
+- `effects.js`: sons e animações da interface.
+- `app.js`: integração com HTML, renderização da tela e persistência no navegador.
+
+A lógica da matéria fica separada dos efeitos visuais e sonoros para facilitar
+a explicação durante a apresentação.
+
 ## Como executar
 
 Abra o arquivo `index.html` em qualquer navegador moderno.
