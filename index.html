@@ -4,75 +4,125 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Editor com Desfazer</title>
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=11" />
   </head>
   <body>
     <main class="app-shell">
       <section class="editor-panel" aria-labelledby="app-title">
         <div class="header-group">
-          <p class="eyebrow">Estrutura de Dados: Pilhas</p>
+          <p class="eyebrow">Projeto de Estrutura de Dados</p>
           <h1 id="app-title">Editor com Desfazer</h1>
           <p class="summary">
-            Protótipo Web que usa duas pilhas manuais para controlar as ações
-            de desfazer e refazer.
+            Aplicação Web que mostra uma pilha literal: cada palavra inserida
+            vira um item empilhado no topo.
           </p>
         </div>
 
         <form class="input-row" id="insert-form">
-          <label for="text-input">Texto para inserir</label>
+          <label for="text-input">Palavra para empilhar</label>
           <div class="input-actions">
             <input
               id="text-input"
               name="text-input"
               type="text"
               autocomplete="off"
-              placeholder="Digite um trecho e clique em inserir"
+              placeholder="Digite uma ou mais palavras"
             />
-            <button type="submit" class="button primary">Inserir</button>
+            <button type="submit" class="button primary">Empilhar</button>
           </div>
         </form>
 
-        <div class="toolbar" aria-label="Controles do editor">
-          <button type="button" class="button" id="undo-button">Desfazer</button>
-          <button type="button" class="button" id="redo-button">Refazer</button>
+        <div class="toolbar" aria-label="Controles da pilha">
+          <button type="button" class="button" id="undo-button">
+            <svg
+              class="button-icon"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d="M9 14 4 9l5-5" />
+              <path d="M4 9h9a7 7 0 0 1 7 7v1" />
+            </svg>
+            <span>Desfazer</span>
+          </button>
+          <button type="button" class="button" id="redo-button">
+            <svg
+              class="button-icon"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d="m15 14 5-5-5-5" />
+              <path d="M20 9h-9a7 7 0 0 0-7 7v1" />
+            </svg>
+            <span>Refazer</span>
+          </button>
           <button type="button" class="button danger" id="clear-button">
-            Limpar
+            <svg
+              class="button-icon"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d="M3 6h18" />
+              <path d="M8 6V4h8v2" />
+              <path d="m19 6-1 14H6L5 6" />
+              <path d="M10 11v5" />
+              <path d="M14 11v5" />
+            </svg>
+            <span>Apagar</span>
           </button>
         </div>
 
-        <label for="editor-content" class="editor-label">Conteúdo atual</label>
-        <textarea
-          id="editor-content"
-          class="editor"
-          readonly
-          placeholder="O texto inserido aparecerá aqui."
-        ></textarea>
+        <section class="stack-workbench" aria-labelledby="main-stack-title">
+          <div class="stack-workbench-header">
+            <div>
+              <p class="stack-label">Pilha principal</p>
+              <h2 id="main-stack-title">Itens empilhados</h2>
+            </div>
+          </div>
+          <ol
+            id="editor-content"
+            class="main-stack-list"
+            aria-label="Itens atuais da pilha"
+          ></ol>
+        </section>
 
         <div class="status-bar">
-          <span id="character-count">0 caracteres</span>
+          <span id="character-count">0 itens empilhados</span>
           <span id="save-status">Nenhuma alteração salva</span>
         </div>
+
+        <dl class="project-info" aria-label="Informações do projeto">
+          <div>
+            <dt>Trabalho de Estrutura de Dados</dt>
+            <dd>Fernando Costa, Gabriel Leme e Mateus Bueno</dd>
+          </div>
+        </dl>
       </section>
 
       <aside class="history-panel" aria-label="Histórico das pilhas">
-        <section class="stack-card">
-          <div>
-            <p class="stack-label">Pilha de desfazer</p>
-            <h2>Undo Stack</h2>
-          </div>
-          <ol id="undo-stack-list" class="stack-list"></ol>
-        </section>
+        <div class="history-guide">
+          <strong>Como ler a lateral</strong>
+          <p>
+            O item mais recente fica no topo da pilha. Desfazer tira o topo;
+            refazer coloca o item de volta.
+          </p>
+        </div>
 
-        <section class="stack-card">
+        <section class="stack-card redo-card">
           <div>
             <p class="stack-label">Pilha de refazer</p>
-            <h2>Redo Stack</h2>
+            <h2>Itens retirados</h2>
+            <p class="stack-help">
+              Quando você desfaz, o item retirado aparece aqui até ser refeito.
+            </p>
           </div>
           <ol id="redo-stack-list" class="stack-list"></ol>
         </section>
       </aside>
     </main>
 
-    <script src="app.js"></script>
+    <script src="app.js?v=11"></script>
   </body>
 </html>

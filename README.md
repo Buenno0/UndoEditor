@@ -1,14 +1,14 @@
 # Editor com Desfazer
 
-Projeto 3 da disciplina de Estrutura de Dados: um editor Web simples com
-funcionalidades de desfazer e refazer usando pilhas implementadas manualmente.
+Projeto 3 da matéria de Estrutura de Dados: uma aplicação Web que demonstra o
+funcionamento de pilhas com ações de desfazer e refazer.
+
+Trabalho desenvolvido por Fernando Costa, Gabriel Leme e Mateus Bueno.
 
 ## Objetivo
 
-Demonstrar o uso de duas pilhas em uma aplicação Web:
-
-- `undoStack`: guarda os estados anteriores do editor.
-- `redoStack`: guarda os estados que podem ser refeitos.
+Demonstrar o uso de pilhas de forma visual e direta. Cada palavra inserida vira
+um item empilhado no topo da pilha principal.
 
 ## Tecnologias
 
@@ -26,15 +26,16 @@ dados.
 
 ## Funcionamento
 
-Ao inserir um novo texto, o conteúdo atual do editor é salvo na pilha de
-desfazer. Depois disso, o novo texto é exibido no editor e a pilha de refazer é
-limpa.
+Ao clicar em **Empilhar**, cada palavra digitada é adicionada no topo da pilha
+principal.
 
-Ao clicar em **Desfazer**, o estado atual vai para a pilha de refazer e o topo
-da pilha de desfazer volta para o editor.
+Ao clicar em **Desfazer**, o item do topo é removido da pilha principal e vai
+para a pilha de refazer.
 
-Ao clicar em **Refazer**, o estado atual vai para a pilha de desfazer e o topo
-da pilha de refazer volta para o editor.
+Ao clicar em **Refazer**, o item do topo da pilha de refazer volta para o topo
+da pilha principal.
+
+Ao inserir uma nova palavra depois de desfazer, a pilha de refazer é limpa.
 
 ## Estrutura de Dados
 
@@ -54,22 +55,23 @@ As operações `push` e `pop` possuem complexidade `O(1)`.
 
 O projeto salva automaticamente no `localStorage`:
 
-- conteúdo atual do editor;
-- pilha de desfazer;
-- pilha de refazer;
+- itens da pilha principal;
+- itens da pilha de refazer;
 - data da última alteração.
 
 Ao recarregar a página, o estado salvo é restaurado.
 
 ## Testes manuais sugeridos
 
-1. Inserir texto e verificar se aparece no editor.
-2. Inserir vários textos e desfazer em ordem inversa.
-3. Refazer após desfazer.
-4. Inserir novo texto depois de desfazer e confirmar que o refazer é limpo.
-5. Recarregar a página e verificar se conteúdo e histórico continuam salvos.
-6. Limpar o editor e confirmar que conteúdo e pilhas ficam vazios.
+1. Empilhar palavras e verificar se a última aparece no topo.
+2. Desfazer e confirmar que o topo sai da pilha principal.
+3. Refazer e confirmar que o item volta ao topo.
+4. Inserir uma nova palavra depois de desfazer e confirmar que a pilha de refazer é limpa.
+5. Recarregar a página e verificar se as pilhas continuam salvas.
+6. Apagar tudo e confirmar que as duas pilhas ficam vazias.
 
 ## Integrantes
 
-Preencher com os nomes dos integrantes do grupo.
+- Fernando Costa
+- Gabriel Leme
+- Mateus Bueno
